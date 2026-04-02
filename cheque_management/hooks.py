@@ -132,13 +132,17 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doctype_js = {
+	"Payment Entry": "public/js/doctype_js/payment_entry.js",
+}
+
+doc_events = {
+    "Payment Entry": {
+        "validate": "cheque_management.cheque_management.doc_event.payment_entry.validate",
+        "on_submit": "cheque_management.cheque_management.doc_event.payment_entry.on_submit"
+        
+    }
+}
 
 # Scheduled Tasks
 # ---------------
@@ -237,7 +241,9 @@ app_license = "mit"
 # auth_hooks = [
 # 	"cheque_management.auth.validate"
 # ]
-
+fixtures = [
+    {"dt": "Custom Field", "filters": [["module", "in", ["Cheque Management"]]]},
+]
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
 

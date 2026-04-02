@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:CBM{####}",
+ "creation": "2026-03-30 16:36:38.039129",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "bank_account",
+  "bank_account_no",
+  "cheque_book_name",
+  "company",
+  "column_break_kgpw",
+  "cheque_book_issue_date",
+  "start_cheque_no",
+  "end_cheque_no",
+  "total_cheques",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Cheque Book Master",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Bank Account",
+   "options": "Bank Account"
+  },
+  {
+   "fieldname": "cheque_book_name",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "Cheque Book Name"
+  },
+  {
+   "fieldname": "start_cheque_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Start Cheque No"
+  },
+  {
+   "fieldname": "end_cheque_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "End Cheque No"
+  },
+  {
+   "fieldname": "total_cheques",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Total Cheques"
+  },
+  {
+   "fieldname": "column_break_kgpw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "bank_account.bank_account_no",
+   "fieldname": "bank_account_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Bank Account No"
+  },
+  {
+   "fetch_from": "bank_account.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "cheque_book_issue_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Cheque Book Issue Date"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-04-02 12:43:59.913247",
+ "modified_by": "Administrator",
+ "module": "Cheque Management",
+ "name": "Cheque Book Master",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "bank_account",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
