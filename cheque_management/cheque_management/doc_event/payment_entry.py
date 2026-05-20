@@ -38,7 +38,7 @@ def validate(self, method):
             )
 
 def on_submit(self,method):
-    if self.payment_type == "Cheque":
+    if self.mode_of_payment == "Cheque":
         
         if  self.cheque_book_leave_ref:
             cheque_book_leave = frappe.get_doc("Cheque Book Leave", self.cheque_book_leave_ref)

@@ -42,13 +42,14 @@ frappe.ui.form.on('Payment Entry', {
         }
     },
     refresh(frm) {
-        if (frm.doc.docstatus == 1 && frm.doc.payment_type == "Cheque") {
 
-            // Remove default cancel button
-            frm.page.clear_secondary_action();
+    if (frm.doc.docstatus == 1 && frm.doc.mode_of_payment == "Cheque") {
 
-            // Add custom cancel button
-            frm.page.set_secondary_action(__('Cancel'), function () {
+        setTimeout(() => {
+
+            frm.page.btn_secondary.hide();
+
+            frm.add_custom_button(__('Cancel'), function () {
 
                 let d = new frappe.ui.Dialog({
                     title: 'Select Cheque Status',
@@ -83,6 +84,9 @@ frappe.ui.form.on('Payment Entry', {
                 d.show();
 
             });
-        }
+
+        }, 500);
     }
+}
+
 });
