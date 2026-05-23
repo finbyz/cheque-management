@@ -6,27 +6,18 @@ on:
       - version-16
   pull_request:
 
-concurrency:
-  group: version-16-cheque_management-${{ github.event.number }}
-  cancel-in-progress: true
-
 jobs:
   tests:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-
-    name: Server
-
     services:
       redis-cache:
-        image: redis:alpine
+        image: redis:7-alpine
         ports:
           - 13000:6379
 
       redis-queue:
-        image: redis:alpine
+        image: redis:7-alpine
         ports:
           - 11000:6379
 
@@ -36,20 +27,9 @@ jobs:
           MYSQL_ROOT_PASSWORD: root
         ports:
           - 3306:3306
-        options: >-
-          --health-cmd="mariadb-admin ping"
-          --health-interval=5s
-          --health-timeout=2s
-          --health-retries=3
 
     steps:
-      - name: Clone Repository
-        uses: actions/checkout@v4
-
-      - name: Find Tests
-        run: |
-          echo "Finding tests"
-          grep -rn "def test" . > /dev/null
+      - uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -59,71 +39,43 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          check-latest: true
+          node-version: "20"
 
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py', '**/setup.cfg') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache yarn
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Install System Dependencies
+      - name: Install dependencies
         run: |
           sudo apt update
-
           sudo apt install -y \
             mariadb-client \
-            redis-tools \
-            xvfb \
-            libfontconfig \
-            wkhtmltopdf \
-            curl
+            redis-tools
 
       - name: Install Bench
         run: |
-          pip install --upgrade pip
-          pip install frappe-bench
+          python -m pip install --upgrade pip
+          pip install "frappe-bench==5.29.1"
 
       - name: Initialize Bench
         run: |
           bench init \
+            --frappe-branch version-16 \
             --skip-redis-config-generation \
             --skip-assets \
-            --python "$(which python)" \
+            --python python3 \
             ~/frappe-bench
 
       - name: Configure MariaDB
         run: |
-          mariadb --host 127.0.0.1 --port 3306 -u root -proot \
-            -e "SET GLOBAL character_set_server = 'utf8mb4';"
+          mariadb -h 127.0.0.1 -P 3306 -u root -proot \
+          -e "SET GLOBAL character_set_server='utf8mb4';"
 
-          mariadb --host 127.0.0.1 --port 3306 -u root -proot \
-            -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci';"
+          mariadb -h 127.0.0.1 -P 3306 -u root -proot \
+          -e "SET GLOBAL collation_server='utf8mb4_unicode_ci';"
 
       - name: Install App
-        working-directory: /home/runner/frappe-bench
+        working-directory: ~/frappe-bench
         env:
           CI: "Yes"
         run: |
           bench get-app cheque_management $GITHUB_WORKSPACE
-
-          bench setup requirements --dev
 
           bench new-site test_site \
             --admin-password admin \
@@ -132,13 +84,8 @@ jobs:
 
           bench --site test_site install-app cheque_management
 
-          bench build
-
       - name: Run Tests
-        working-directory: /home/runner/frappe-bench
-        env:
-          TYPE: server
+        working-directory: ~/frappe-bench
         run: |
           bench --site test_site set-config allow_tests true
-
           bench --site test_site run-tests --app cheque_management
