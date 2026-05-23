@@ -6,18 +6,25 @@ on:
       - version-16
   pull_request:
 
+concurrency:
+  group: version-16-cheque_management-${{ github.event.number }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+
     services:
       redis-cache:
-        image: redis:7-alpine
+        image: redis:alpine
         ports:
           - 13000:6379
 
       redis-queue:
-        image: redis:7-alpine
+        image: redis:alpine
         ports:
           - 11000:6379
 
@@ -27,31 +34,42 @@ jobs:
           MYSQL_ROOT_PASSWORD: root
         ports:
           - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 20
 
-      - name: Install dependencies
+      - name: Install Linux Dependencies
         run: |
           sudo apt update
+
           sudo apt install -y \
             mariadb-client \
-            redis-tools
+            redis-tools \
+            xvfb \
+            libfontconfig1 \
+            wkhtmltopdf \
+            curl
 
       - name: Install Bench
         run: |
           python -m pip install --upgrade pip
-          pip install "frappe-bench==5.29.1"
+          pip install frappe-bench
 
       - name: Initialize Bench
         run: |
@@ -65,27 +83,30 @@ jobs:
       - name: Configure MariaDB
         run: |
           mariadb -h 127.0.0.1 -P 3306 -u root -proot \
-          -e "SET GLOBAL character_set_server='utf8mb4';"
+          -e "SET GLOBAL character_set_server = 'utf8mb4';"
 
           mariadb -h 127.0.0.1 -P 3306 -u root -proot \
-          -e "SET GLOBAL collation_server='utf8mb4_unicode_ci';"
+          -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci';"
 
       - name: Install App
-        working-directory: ~/frappe-bench
+        working-directory: /home/runner/frappe-bench
         env:
           CI: "Yes"
         run: |
           bench get-app cheque_management $GITHUB_WORKSPACE
 
+          bench setup requirements --dev
+
           bench new-site test_site \
-            --admin-password admin \
             --db-root-password root \
+            --admin-password admin \
             --no-mariadb-socket
 
           bench --site test_site install-app cheque_management
 
       - name: Run Tests
-        working-directory: ~/frappe-bench
+        working-directory: /home/runner/frappe-bench
         run: |
           bench --site test_site set-config allow_tests true
+
           bench --site test_site run-tests --app cheque_management
